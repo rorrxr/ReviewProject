@@ -23,7 +23,7 @@ public class Product {
 
     // 상품 : 리뷰 = N : N
     // 연관 관계 설정
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id", nullable = false)
-    private Review review;
+//    @ManyToMany(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "id", nullable = false)
+//    private Review review;
 }
