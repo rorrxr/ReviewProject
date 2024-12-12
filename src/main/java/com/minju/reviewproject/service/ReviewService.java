@@ -1,11 +1,9 @@
 package com.minju.reviewproject.service;
 
-import com.minju.reviewproject.dto.ReviewDto;
 import com.minju.reviewproject.dto.ReviewRequestDto;
 import com.minju.reviewproject.dto.ReviewResponseDto;
 import com.minju.reviewproject.entity.Product;
 import com.minju.reviewproject.entity.Review;
-import com.minju.reviewproject.entity.User;
 import com.minju.reviewproject.repository.ProductRepository;
 import com.minju.reviewproject.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
