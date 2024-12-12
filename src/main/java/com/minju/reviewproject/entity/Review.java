@@ -2,6 +2,7 @@ package com.minju.reviewproject.entity;
 
 import com.minju.reviewproject.dto.ReviewRequestDto;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -31,6 +32,7 @@ public class Review {
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Builder
     public Review(ReviewRequestDto requestDto, Product product, String imageUrl) {
         this.product = product;
         this.userId = requestDto.getUserId();
