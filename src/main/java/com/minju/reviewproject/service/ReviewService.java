@@ -1,5 +1,6 @@
 package com.minju.reviewproject.service;
 
+import com.minju.reviewproject.dto.ReviewDto;
 import com.minju.reviewproject.dto.ReviewRequestDto;
 import com.minju.reviewproject.dto.ReviewResponseDto;
 import com.minju.reviewproject.entity.Product;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -19,9 +21,10 @@ public class ReviewService {
     private final ProductRepository productRepository;
     private final ReviewRepository reviewRepository;
 
-    // 리뷰 multipartfile 추가
     @Transactional
     public void addReview(Long productId, MultipartFile image, ReviewRequestDto requestDto) {
+        validateScore(requestDto.getScore());
+
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("제품을 찾을 수 없습니다"));
 
@@ -29,37 +32,24 @@ public class ReviewService {
             throw new IllegalStateException("사용자가 이미 이 제품에 대한 리뷰를 작성했습니다");
         }
 
-        List<MultipartFile> files;
-
-        // 파일 처리를 위한 Board 객체 생성
-//        Board board = new Board(
-//                requestDto.getMember(),
-//                requestDto.getTitle(),
-//                requestDto.getContent()
-//        );
-//
-//        List<Photo> photoList = fileHandler.parseFileInfo(files);
-//
-//        // 파일이 존재할 때에만 처리
-//        if(!photoList.isEmpty()) {
-//            for(Photo photo : photoList) {
-//                // 파일을 DB에 저장
-//                board.addPhoto(photoRepository.save(photo));
-//            }
-//        }
-//
-//        return boardRepository.save(board).getId();
-
         String imageUrl = null;
         if (image != null) {
             imageUrl = "/dummy/image/url"; // 더미 데이터
         }
 
-        Review review = new Review(requestDto, product, imageUrl);
-        reviewRepository.save(review);
+        synchronized (product) {
+            Review review = new Review(requestDto, product, imageUrl);
+            reviewRepository.save(review);
+
+            int newReviewCount = product.getReviewCount() + 1;
+            float newScore = calculateNewAverage(product.getScore(), product.getReviewCount(), requestDto.getScore());
+            product.setReviewCount(newReviewCount);
+            product.setScore(newScore);
+
+            productRepository.save(product);
+        }
     }
 
-    // 리뷰 조회
     @Transactional(readOnly = true)
     public ReviewResponseDto getReviews(Long productId, Long cursor, int size) {
         productRepository.findById(productId)
@@ -71,11 +61,24 @@ public class ReviewService {
 
         Long newCursor = reviews.isEmpty() ? null : reviews.get(reviews.size() - 1).getId();
 
-//        List<ReviewDto> reviewDtos = reviews.stream()
-//                .map(ReviewDto::fromEntity)
-//                .collect(Collectors.toList());
+        List<ReviewDto> reviewDtos = reviews.stream()
+                .map(review -> new ReviewDto(
+                        review.getId(),
+                        review.getUserId(),
+                        review.getScore(),
+                        review.getContent(),
+                        review.getImageUrl(),
+                        review.getCreatedAt()
+                ))
+                .collect(Collectors.toList());
 
         return new ReviewResponseDto(reviewDtos, totalCount, score, newCursor);
+    }
+
+    private void validateScore(int score) {
+        if (score < 1 || score > 5) {
+            throw new IllegalArgumentException("점수는 1에서 5 사이여야 합니다");
+        }
     }
 
     private float calculateNewAverage(float currentAvg, int totalReviews, int newScore) {

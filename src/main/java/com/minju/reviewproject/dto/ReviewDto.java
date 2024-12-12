@@ -19,8 +19,7 @@ public class ReviewDto {
     private String imageUrl;
     private LocalDateTime createdAt;
 
-    public ReviewDto(Review review, Long id, Long userId, int score, String content, String imageUrl, LocalDateTime createdAt) {
-        this.review = review;
+    public ReviewDto(Long id, Long userId, int score, String content, String imageUrl, LocalDateTime createdAt) {
         this.id = id;
         this.userId = userId;
         this.score = score;

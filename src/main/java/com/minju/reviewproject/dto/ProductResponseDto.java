@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 public class ProductResponseDto {
 
     private Long id;
-    private Long reviewCount;
+    private int reviewCount;
     private Float score;
 
     public ProductResponseDto(Product product) {
