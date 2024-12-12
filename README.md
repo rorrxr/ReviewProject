@@ -262,7 +262,10 @@ __ __ __ __ __ __ __
 
 # 3일차 - 2024-12-13
 
-1. postman으로 GET API 테스트 완료
+1. postman으로 GET API(리뷰 조회) 테스트 완료
 
 ![API_GET.png](API_GET.png)
 
+2. postman으로 POST API(리뷰 작성) 테스트 완료
+
+![API_POST.png](API_POST.png)
