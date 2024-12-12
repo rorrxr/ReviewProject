@@ -1,9 +1,12 @@
 package com.minju.reviewproject.entity;
 
+import com.minju.reviewproject.dto.ReviewRequestDto;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
 
 @Entity // JPA가 관리할 수 있는 Entity 클래스 지정
 @Getter
@@ -14,6 +17,9 @@ public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @Column(nullable = false)
     private String title;
@@ -36,7 +42,11 @@ public class Review {
     @Column(nullable = false)
     private Long reviewCount;
 
-    public Review(String title, String content, String author, String date, String time, Float score, Long reviewCount) {
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+
+    public Review(ReviewRequestDto requestDto, Product product) {
         this.title = title;
         this.content = content;
         this.author = author;
@@ -45,5 +55,9 @@ public class Review {
         this.score = score;
         this.reviewCount = reviewCount;
     }
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
 
 }

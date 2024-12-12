@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity // JPA가 관리할 수 있는 Entity 클래스 지정
 @Getter
 @Setter
@@ -21,9 +24,6 @@ public class Product {
     @Column(nullable = false)
     private Float score;
 
-    // 상품 : 리뷰 = N : N
-    // 연관 관계 설정
-//    @ManyToMany(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "id", nullable = false)
-//    private Review review;
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
 }
