@@ -2,14 +2,17 @@ package com.minju.reviewproject.controller;
 
 import com.minju.reviewproject.dto.ReviewRequestDto;
 import com.minju.reviewproject.dto.ReviewResponseDto;
+import com.minju.reviewproject.service.ProductService;
 import com.minju.reviewproject.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import jakarta.validation.Valid;
 
 @Controller
 @RequiredArgsConstructor
@@ -26,12 +29,11 @@ public class MainController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/products/{productId}/reviews")
-    public ResponseEntity<Void> addReview(
-            @PathVariable Long productId,
-            @RequestParam(value = "image", required = false) MultipartFile image,
-            @RequestPart ReviewRequestDto requestDto) {
-        reviewService.addReview(productId, image, requestDto);
+    @PostMapping(value = "/products/{productId}/reviews", consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<Void> createReview(@PathVariable Long productId,
+                                             @Valid @RequestPart ReviewRequestDto requestDto,
+                                             @RequestPart(value = "image", required = false) MultipartFile file) {
+        reviewService.addReview(productId, file, requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }

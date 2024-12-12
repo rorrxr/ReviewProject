@@ -12,4 +12,13 @@ public class ReviewDto {
     private String content;
     private String imageUrl;
     private LocalDateTime createdAt;
+
+    public ReviewDto(Long id, Long userId, int score, String content, String imageUrl, LocalDateTime createdAt) {
+        this.id = id;
+        this.userId = userId;
+        this.score = score;
+        this.content = content;
+        this.imageUrl = imageUrl;
+        this.createdAt = createdAt;
+    }
 }
