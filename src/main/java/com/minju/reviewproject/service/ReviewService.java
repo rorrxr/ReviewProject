@@ -12,6 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,6 +53,55 @@ public class ReviewService {
             productRepository.save(product);
         }
     }
+
+//    @Transactional
+//    public void addReview(Long productId, MultipartFile image, ReviewRequestDto requestDto) {
+//        validateScore(requestDto.getScore());
+//
+//        Product product = productRepository.findById(productId)
+//                .orElseThrow(() -> new IllegalArgumentException("제품을 찾을 수 없습니다"));
+//
+//        if (reviewRepository.existsByProductIdAndUserId(productId, requestDto.getUserId())) {
+//            throw new IllegalStateException("사용자가 이미 이 제품에 대한 리뷰를 작성했습니다");
+//        }
+//
+//        String imageUrl = null;
+//        if (image != null && !image.isEmpty()) {
+//            imageUrl = saveImageAndGetUrl(image); // 이미지 저장 후 URL 반환
+//        }
+//
+//        synchronized (product) {
+//            Review review = new Review(requestDto, product, imageUrl);
+//            reviewRepository.save(review);
+//
+//            int newReviewCount = product.getReviewCount() + 1;
+//            float newScore = calculateNewAverage(product.getScore(), product.getReviewCount(), requestDto.getScore());
+//            product.setReviewCount(newReviewCount);
+//            product.setScore(newScore);
+//
+//            productRepository.save(product);
+//        }
+//    }
+//
+//    private String saveImageAndGetUrl(MultipartFile image) {
+//        try {
+//            // 파일 저장 경로
+//            String uploadDir = "uploads/images/";
+//            String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
+//            Path filePath = Paths.get(uploadDir, fileName);
+//
+//            // 디렉토리가 없는 경우 생성
+//            Files.createDirectories(filePath.getParent());
+//
+//            // 파일 저장
+//            Files.write(filePath, image.getBytes());
+//
+//            // URL 반환 (서버에 맞게 수정 필요)
+//            return "/uploads/images/" + fileName;
+//        } catch (IOException e) {
+//            throw new IllegalStateException("이미지 저장 중 오류가 발생했습니다", e);
+//        }
+//    }
 
     @Transactional(readOnly = true)
     public ReviewResponseDto getReviews(Long productId, Long cursor, int size) {
