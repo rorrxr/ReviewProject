@@ -8,6 +8,7 @@ import com.minju.reviewproject.entity.Review;
 import com.minju.reviewproject.repository.ProductRepository;
 import com.minju.reviewproject.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.tomcat.jni.FileInfo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,10 +37,30 @@ public class ReviewService {
         if (reviewRepository.existsByProductIdAndUserId(productId, requestDto.getUserId())) {
             throw new IllegalStateException("사용자가 이미 이 제품에 대한 리뷰를 작성했습니다");
         }
-
         String imageUrl = null;
-        if (image != null) {
-            imageUrl = "/dummy/image/url"; // 더미 데이터
+        if (image != null && !image.isEmpty()) {
+            try {
+                // 파일 저장 디렉토리 설정 (예: "uploads" 디렉토리)
+                String uploadDir = "uploads";
+                Path uploadPath = Paths.get(uploadDir);
+
+                // 디렉토리가 없으면 생성
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+
+                // 파일 이름 설정 (중복 방지를 위해 UUID 추가)
+                String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
+                Path filePath = uploadPath.resolve(fileName);
+
+                // 파일 저장
+                Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                // 파일 URL 생성 (서버 경로에 따라 수정 필요)
+                imageUrl = "/uploads/" + fileName; // 웹에서 접근 가능한 경로로 설정
+            } catch (Exception e) {
+                throw new IllegalStateException("파일 업로드 중 오류가 발생했습니다", e);
+            }
         }
 
         synchronized (product) {
