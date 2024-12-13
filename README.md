@@ -233,9 +233,9 @@ __ __ __ __ __ __ __
 
 ![POST_ERROR.png](POST_ERROR.png)
 
-dto에 선언을 제대로 해주지 않아서 일어난 문제였다.
+- dto에 선언을 제대로 해주지 않아서 일어난 문제였다.
 
-기존 dto
+기존 `ReviewRequestDto`
 
 ```
 public class ReviewRequestDto {
@@ -245,7 +245,7 @@ public class ReviewRequestDto {
 }
 ```
 
-변경된 dto
+변경된 `ReviewRequestDto`
 
 ```
 public class ReviewRequestDto {
@@ -257,10 +257,59 @@ public class ReviewRequestDto {
     private LocalDateTime createdAt;
 }
 ```
-정상적으로 돌아가는 POST API TEST
+- 정상적으로 돌아가는 POST API TEST
 
 ![POST_ERROR_CLEAR.png](POST_ERROR_CLEAR.png)
+
+4. 이미지 URL 오류
 
 - 다만, 리뷰 작성 POST 부분에서 문제점이 발생하였습니다. 
 - 이미지 파일을 DB에서 `/dummy/image/url` 로 저장되고 있습니다.
 - 따라서 이 부분에 대한 수정이 필요합니다.
+
+이 부분은 FileInfo를 추가하고, Serivce 부분을 변경했습니다.
+
+FileInfo.java
+```
+public class FileInfo {
+    private String fileName;
+    private byte[] data;
+
+    public FileInfo(String fileName, byte[] data) {
+        this.fileName = fileName;
+        this.data = data;
+    }
+}
+```
+ReviewService.java
+```
+String imageUrl = null;
+if (image != null && !image.isEmpty()) {
+    try {
+        // 파일 저장 디렉토리 설정 (예: "uploads" 디렉토리)
+        String uploadDir = "uploads";
+        Path uploadPath = Paths.get(uploadDir);
+
+        // 디렉토리가 없으면 생성
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+
+        // 파일 이름 설정 (중복 방지를 위해 UUID 추가)
+        String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
+        Path filePath = uploadPath.resolve(fileName);
+
+        // 파일 저장
+        Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+        // 파일 URL 생성 (서버 경로에 따라 수정 필요)
+        imageUrl = "/uploads/" + fileName; // 웹에서 접근 가능한 경로로 설정
+    } catch (Exception e) {
+        throw new IllegalStateException("파일 업로드 중 오류가 발생했습니다", e);
+    }
+}
+```
+
+- POSTMAN 리뷰 작성 시 Image URL 정상 호출 화면
+
+![IMAGE_URL_ERROR_CLEAR.png](IMAGE_URL_ERROR_CLEAR.png)
