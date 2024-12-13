@@ -1,10 +1,15 @@
-# 기업과제 1번 : 리뷰 서비스
-- 개발환경 : SpringBoot, JPA, MySql, Docker
-- 8조 : 김민주, 정닛시, 양한서
+# 개인 기업과제 프로젝트 1번 : 리뷰 서비스
+- 개발환경 : SpringBoot, Spring Data JPA, MySql, Docker, DBeaver
+- 팀 스터디 8조 : 김민주, 정닛시, 양한서
 
 ## 과제 설명
 
 - 상품에 대한 review를 작성하고, 상품별 review 점수, 개수, 그리고 리뷰 내용을 관리합니다.
+- 클라우드 환경에서의 배포는 고려하지 않는다.
+- docker-compose 기반으로 필요한 인프라 설정을 한다.
+- DB 스키마는 요구 사항을 만족할 수 있게 설계하되, 인덱스를 설정해 성능에 문제가 없도록 만들어야 한다.
+- 데이터를 persistent 하게 저장해야 하는 데이터베이스는 MySql 만 고려하고, 이외 데이터베이스는 고려하지 않는다.
+- 대용량 트래픽이 예상되는데 DynamoDB 나 Cassandra 계열을 사용하는 등의 문제 해결 방식은 허용하지 않는다.
 __ __ __ __ __ __ __
 
 ## 비즈니스 요구 사항
@@ -26,20 +31,74 @@ __ __ __ __ __ __ __
 - (Optional) 테스트 코드를 작성하면 좋습니다.
 __ __ __ __ __ __ __
 
-# 개발 회고
+### 데이터 모델링 Entity
 
-# 1일차 - 2024-12-11
+`Product` Entity
 
-- Docker 개발 환경설정 완료
-- 기본 프로젝트 구조 만들기 (dto, controller, entity, repository, service)
+```
+public class Product {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-# 팀원 분들의 feedback
+    private String name;
 
-- `docker` 환경 설정이 되지 않아서 팀원들에게 도움을 얻었습니다.
-- `docker-compose.yml`에 DB 정보가 있어서 보안상의 이유로 `gitignore`를 하였습니다.
-- `docker-compose.yml`의 소스 코드는 팀원 피드백에 있는 `docker-compose.yml`을 참고해주세요.
+    private int reviewCount;
 
-1. 정닛시 님의 피드백
+    private float score;
+}
+```
+
+`Review` Entity
+
+```
+public class Review {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
+
+    private Long userId;
+
+    private int score;
+
+    private String content;
+
+    private String imageUrl;
+
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Builder
+    public Review(ReviewRequestDto requestDto, Product product, String imageUrl) {
+        this.product = product;
+        this.userId = requestDto.getUserId();
+        this.score = requestDto.getScore();
+        this.content = requestDto.getContent();
+        this.imageUrl = imageUrl;
+    }
+}
+```
+
+__ __ __ __ __ __ __
+
+# 트러블 슈팅 사례
+
+## 1. Docker 환경 설정
+
+### 문제
+- 프로젝트 초기 Docker 환경 설정 과정에서 오류 발생했습니다.
+- `docker-compose.yml`에 민감한 DB 정보가 포함되어 Git에 업로드될 위험하다고 생각했습니다.
+
+### 해결
+- 팀원들의 도움으로 `docker-compose.yml` 파일을 수정하여 민감 정보는 `.gitignore` 파일로 분리.
+- `docker-compose.yml` 설정을 통해 MySQL과 Spring Application 컨테이너를 독립적으로 구동하도록 구성.
+- 네트워크 연결 문제는 `networks` 설정으로 해결.
+
+### 정닛시 님의 피드백
 
 - 도커 명령어
 
@@ -111,165 +170,66 @@ networks:
   test_network:
 
 ```
-2. 양한서 님의 피드백
+
+### 양한서 님의 피드백
 
 - 참고 ref : https://jandari91.tistory.com/104
 
-__ __ __ __ __ __ __
+---
 
+## 2. Entity 설계 문제
 
-# 2일차 - 2024-12-12
-- Service 구현
-- review controller 수정 및 이름 수정
-- entity 수정
+### 문제
+- JSON 파일에 명시된 데이터 구조를 잘못 이해하여 불필요한 칼럼을 추가하는 실수를 하였습니다.
+- 결과적으로 데이터 조회 시 예상한 결과와 일치하지 않는 문제가 발생했습니다.
 
-```
-문제에 대해서 잘못 이해하고 있었다.
-기존에 주어진 것과 다르게 리뷰를 작성할 때 있어야 할 거 같은 칼럼들을 자유롭게 추가했었다.
-하지만 기본적으로 조회 시 제공되는 JSON 형식의 파일이 제공되었기 때문에
-이것에 맞춰서 entity를 구현해야 했다.
+### 해결
+- 제공된 JSON 데이터 구조를 재검토하여 불필요한 칼럼 제거하였습니다.
+- `Product`와 `Review` 엔티티를 JSON 구조에 맞게 수정하였습니다.
+- `Review`와 `Product` 간 N:1 관계를 명시적으로 설정하여 데이터 일관성을 유지하였습니다.
 
-그래서 entity를 수정하였다.
-```
+### 느낀점
+- 요구사항과 데이터 구조를 정확히 이해하고, 개발 전에 설계를 철저히 검토해야 함.
 
-# 2일차 기술 매니저님의 feedback
-1. 자바 변수명 컨벤션에 지켜서 적기 (자주 하는 실수인데 꼭 지키도록 명심하기!)
-2. readme 작성
-3. entity 수정하기
+---
 
-전체 팀원 feedback 기록
+## 3. DTO 선언 문제
 
-```
-1. 도커 컴포즈 나눠서 사용가능
-하나는 계속 띄우게 - db나 이제 계속 떠있는 것
-자바 소스 바꾸면 자동 빌드하게 도커 설정 가능
+### 문제
+- 초기 `ReviewRequestDto` 설계에서 필요한 필드(`imageUrl`, `createdAt`)를 누락하여 POST API 테스트 중 `NullPointerException` 발생.
 
-2. 리드미
-문제에 대한 분석 그리고 왜 이걸 사용했는지, 나의 의도가 담겨 있어야 함
-리드미 먼저 작성하면
-트러블 슈팅이 있을 때, 작성하기 수월하다.
-기획단계부터 리드미 작성하고 수정해 나가는 걸 추천해주심
+### 해결
+- 누락된 필드를 추가하였습니다.
+- Postman으로 API 테스트를 반복적으로 실행하여 문제 해결 완료.
 
-3. 이미지가 들어왔을 때 url 처리 되는 것 더미 처리 → 로컬에 저장해보고 불러와 보는 것도 해보면 좋을 듯?
-이미지 하나에 대한 이유도 read me 에 작성해주면 좋을 듯.
+### 느낀점
+- DTO 설계는 API 사양을 철저히 검토한 후 진행해야 하며, 테스트를 통해 설계의 문제점을 조기에 발견하는 것이 중요함.
 
-4 예외 핸들링은 굳이 안해도 되고 optional 까지 끝내고 하는게 좋다.
+---
 
-5. 테스트 코드 유닛테스트, 통합테스트 둘 다 작성되면 좋을 듯.
-단위 테스트는 일반적으로 메인 로직이 있는 서비스만 해도 될듯 커버리지 100%
+## 4. 이미지 URL 처리 문제
 
-6. user entity 작성에 대해서 read me 에서 내가 왜 그렇게 했는지 설명해주면 될 듯. 
-db에 넣어서 user를 더미데이터로 하는게 어떨지
-```
+### 문제
+- 이미지 업로드 기능이 제대로 구현되지 않아 리뷰 작성 시 `/dummy/image/url` 같은 더미 URL이 저장되는 문제가 발생하였습니다.
 
-# entity 설명
+### 해결
+1. 파일 업로드 디렉토리를 `uploads`로 설정하고, 디렉토리가 없으면 자동으로 생성되도록 수정.
+2. 업로드된 파일 이름에 타임스탬프를 추가하여 중복 파일명을 방지.
+3. 파일 저장 후 URL을 동적으로 생성하여 저장.
+4. 이미지 저장 로직에서 발생할 수 있는 예외를 처리하여 안정성을 확보.
 
-`Product` Entity
+### 느낀점
+- 파일 업로드 기능을 구현할 때는 파일 중복, 경로 설정, 예외 처리 등을 사전에 고려해야 하며, 로컬 파일 저장과 URL 매핑 로직을 명확히 설계해야 함.
 
-```
-public class Product {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+### 스크린샷 
 
-    private String name;
+- POSTMAN 리뷰 작성 시 Image URL 정상 호출 화면
 
-    private int reviewCount;
+![IMAGE_URL_ERROR_CLEAR.png](IMAGE_URL_ERROR_CLEAR.png)
 
-    private float score;
-}
-```
+### 코드
 
-`Review` Entity
-
-```
-public class Review {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
-
-    private Long userId;
-
-    private int score;
-
-    private String content;
-
-    private String imageUrl;
-
-    private LocalDateTime createdAt = LocalDateTime.now();
-
-    @Builder
-    public Review(ReviewRequestDto requestDto, Product product, String imageUrl) {
-        this.product = product;
-        this.userId = requestDto.getUserId();
-        this.score = requestDto.getScore();
-        this.content = requestDto.getContent();
-        this.imageUrl = imageUrl;
-    }
-}
-```
-
-- JSON 기재된 파일을 참고하여 `Product` 와 `Review` entity를 구현하였습니다.
-- `Review`와 `Product`는 N : 1 관계를 가지고 있습니다.
-
-__ __ __ __ __ __ __
-
-# 3일차 - 2024-12-13
-
-1. postman으로 GET API(리뷰 조회) 테스트 완료
-
-![API_GET.png](API_GET.png)
-
-2. 새벽에 postman으로 POST API(리뷰 작성) 테스트 완료
-
-![API_POST.png](API_POST.png)
-
-3. 일어나서 다시 테스트를 하는데 오류 발생.
-
-![POST_ERROR.png](POST_ERROR.png)
-
-- dto에 선언을 제대로 해주지 않아서 일어난 문제였다.
-
-기존 `ReviewRequestDto`
-
-```
-public class ReviewRequestDto {
-    private Long userId;
-    private int score;
-    private String content;
-}
-```
-
-변경된 `ReviewRequestDto`
-
-```
-public class ReviewRequestDto {
-    private Long id;
-    private Long userId;
-    private int score;
-    private String content;
-    private String imageUrl;
-    private LocalDateTime createdAt;
-}
-```
-- 정상적으로 돌아가는 POST API TEST
-
-![POST_ERROR_CLEAR.png](POST_ERROR_CLEAR.png)
-
-4. 이미지 URL 오류
-
-- 다만, 리뷰 작성 POST 부분에서 문제점이 발생하였습니다. 
-- 이미지 파일을 DB에서 `/dummy/image/url` 로 저장되고 있습니다.
-- 따라서 이 부분에 대한 수정이 필요합니다.
-
-이 부분은 FileInfo를 추가하고, Serivce 부분을 변경했습니다.
-
-FileInfo.java
+- FileInfo.java
 ```
 public class FileInfo {
     private String fileName;
@@ -281,7 +241,9 @@ public class FileInfo {
     }
 }
 ```
-ReviewService.java
+
+- ReviewService.java
+
 ```
 String imageUrl = null;
 if (image != null && !image.isEmpty()) {
@@ -310,6 +272,86 @@ if (image != null && !image.isEmpty()) {
 }
 ```
 
-- POSTMAN 리뷰 작성 시 Image URL 정상 호출 화면
+---
 
-![IMAGE_URL_ERROR_CLEAR.png](IMAGE_URL_ERROR_CLEAR.png)
+## 5. 피드백 반영
+
+### 문제
+- 코드 작성 시 변수명 컨벤션 미준수, README 작성 필요, 테스트 코드 미작성 등으로 팀원들로부터 피드백을 받음.
+
+### 해결
+- 변수명은 자바 네이밍 컨벤션을 준수하도록 수정하였습니다.
+- README에 개발 과정, 의도, 선택한 기술 스택, 문제 해결 과정을 추가하여 문서화를 강화.
+- Postman을 사용하여 기본적인 통합 테스트를 작성하였습니다.
+
+### 느낀점
+- 협업 과정에서는 팀원 피드백을 적극적으로 수용하고, 개선 사항을 반영하는 것이 좋다고 생각했습니다.
+---
+
+## 6. Postman 테스트 및 오류 해결
+
+### 문제
+- 새벽에 Postman으로 API 테스트를 성공했으나, 아침에 동일한 API 호출에서 오류 발생했습니다.
+- 오류 원인은 DTO에서 필드 선언이 누락되었기 때문이었습니다.
+
+### 해결
+- DTO 구조를 수정하여 누락된 필드를 추가하고, 다시 Postman으로 테스트를 실행하여 문제 해결.
+- 이후에도 Postman 테스트를 자동화하는 방안을 검토.
+
+### 느낀점
+- 테스트는 반복적으로 실행하여 안정성을 확인하고, 오류 발생 시 로그를 분석하여 문제를 해결해야겠다고 생각했습니다.
+
+### 코드
+
+기존 `ReviewRequestDto`
+
+```
+public class ReviewRequestDto {
+    private Long userId;
+    private int score;
+    private String content;
+}
+```
+
+변경된 `ReviewRequestDto`
+
+```
+public class ReviewRequestDto {
+    private Long id;
+    private Long userId;
+    private int score;
+    private String content;
+    private String imageUrl;
+    private LocalDateTime createdAt;
+}
+```
+
+### 스크린샷
+
+1. postman으로 GET API(리뷰 조회) 테스트 완료
+
+![API_GET.png](API_GET.png)
+
+2. 새벽에 postman으로 POST API(리뷰 작성) 테스트 완료
+
+![API_POST.png](API_POST.png)
+
+3. 일어나서 다시 테스트를 하는데 오류 발생.
+
+![POST_ERROR.png](POST_ERROR.png)
+
+4. 정상적으로 돌아가는 POST API TEST
+
+![POST_ERROR_CLEAR.png](POST_ERROR_CLEAR.png)
+
+__ __ __ __ __ __ __
+
+# 향후 추가 개선사항
+
+### (Optional) 동시성을 고려한 설계
+- 많은 유저들이 동시에 리뷰를 작성할 때, 발생할 수 있는 문제를 고려하기
+- 다른 팀원은 Redis를 사용하여 동시성을 고려했지만, 나는 Redis를 모르기 때문에 Mysql 환경에서 고려할 수 있게 설계하도록 기능을 구현해야 한다.
+
+### (Optional) 테스트 코드 작성
+
+### '가장 최근에 작성된 리뷰' 순서대로 조회하기 기능
