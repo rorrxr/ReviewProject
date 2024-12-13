@@ -108,9 +108,9 @@ __ __ __ __ __ __ __
 
 # 팀원 분들의 feedback
 
-- docker 설정이 되지 않아서 도움을 얻었다.
-- docker-compose.yml에 DB 정보가 있어서 보안상의 이유로 gitignore를 하였습니다.
-- docker-compose.yml의 소스 코드는 팀원 피드백에 있는 docker-compose.yml을 참고해주세요.
+- `docker` 환경 설정이 되지 않아서 팀원들에게 도움을 얻었습니다.
+- `docker-compose.yml`에 DB 정보가 있어서 보안상의 이유로 `gitignore`를 하였습니다.
+- `docker-compose.yml`의 소스 코드는 팀원 피드백에 있는 `docker-compose.yml`을 참고해주세요.
 
 1. 정닛시 님의 피드백
 
@@ -234,6 +234,61 @@ __ __ __ __ __ __ __
 6. user entity 작성에 대해서 read me 에서 내가 왜 그렇게 했는지 설명해주면 될 듯. 
 db에 넣어서 user를 더미데이터로 하는게 어떨지
 ```
+
+# entity 설명
+
+`Product` Entity
+
+```
+public class Product {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+
+    private int reviewCount;
+
+    private float score;
+}
+```
+
+`Review` Entity
+
+```
+public class Review {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
+
+    private Long userId;
+
+    private int score;
+
+    private String content;
+
+    private String imageUrl;
+
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Builder
+    public Review(ReviewRequestDto requestDto, Product product, String imageUrl) {
+        this.product = product;
+        this.userId = requestDto.getUserId();
+        this.score = requestDto.getScore();
+        this.content = requestDto.getContent();
+        this.imageUrl = imageUrl;
+    }
+}
+```
+
+- JSON 기재된 파일을 참고하여 `Product` 와 `Review` entity를 구현하였습니다.
+- `Review`와 `Product`는 N : 1 관계를 가지고 있습니다.
 
 __ __ __ __ __ __ __
 
