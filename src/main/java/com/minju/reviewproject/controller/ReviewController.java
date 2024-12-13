@@ -34,7 +34,7 @@ public class ReviewController {
 //        return ResponseEntity.status(HttpStatus.CREATED).build();
 //    }
 
-    @PostMapping(value = "/{productId}/reviews", consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PostMapping(value = "/{productId}/reviews", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> createReview(
             @PathVariable Long productId,
             @RequestPart(value = "requestDto") @Valid ReviewRequestDto requestDto,
