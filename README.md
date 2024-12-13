@@ -109,6 +109,8 @@ __ __ __ __ __ __ __
 # 팀원 분들의 feedback
 
 - docker 설정이 되지 않아서 도움을 얻었다.
+- docker-compose.yml에 DB 정보가 있어서 보안상의 이유로 gitignore를 하였습니다.
+- docker-compose.yml의 소스 코드는 팀원 피드백에 있는 docker-compose.yml을 참고해주세요.
 
 1. 정닛시 님의 피드백
 
