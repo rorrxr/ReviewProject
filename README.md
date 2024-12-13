@@ -250,3 +250,35 @@ __ __ __ __ __ __ __
 3. 일어나서 다시 테스트를 하는데 오류 발생.
 
 ![POST_ERROR.png](POST_ERROR.png)
+
+dto에 선언을 제대로 해주지 않아서 일어난 문제였다.
+
+기존 dto
+
+```
+public class ReviewRequestDto {
+    private Long userId;
+    private int score;
+    private String content;
+}
+```
+
+변경된 dto
+
+```
+public class ReviewRequestDto {
+    private Long id;
+    private Long userId;
+    private int score;
+    private String content;
+    private String imageUrl;
+    private LocalDateTime createdAt;
+}
+```
+정상적으로 돌아가는 POST API TEST
+
+![POST_ERROR_CLEAR.png](POST_ERROR_CLEAR.png)
+
+- 다만, 리뷰 작성 POST 부분에서 문제점이 발생하였습니다. 
+- 이미지 파일을 DB에서 `/dummy/image/url` 로 저장되고 있습니다.
+- 따라서 이 부분에 대한 수정이 필요합니다.
