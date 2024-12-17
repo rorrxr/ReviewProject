@@ -2,7 +2,7 @@
 - 개발환경 : SpringBoot, Spring Data JPA, MySql, Docker, DBeaver
 - 팀 스터디 8조 : 김민주, 정닛시, 양한서
 
-## 과제 설명
+## 프로젝트 설명
 
 - 상품에 대한 review를 작성하고, 상품별 review 점수, 개수, 그리고 리뷰 내용을 관리합니다.
 - 클라우드 환경에서의 배포는 고려하지 않는다.
@@ -18,8 +18,6 @@ __ __ __ __ __ __ __
 - 유저는 하나의 상품에 대해 하나의 리뷰만 작성 가능합니다.
 - 유저는 1~5점 사이의 점수와 리뷰를 남길 수 있습니다.
 - 사진은 선택적으로 업로드 가능합니다.
-    - 사진은 S3 에 저장된다고 가정하고, S3 적재 부분은 dummy 구현체를 생성합니다.
-      (실제 S3 연동을 할 필요는 없습니다.)
 - 리뷰는 '가장 최근에 작성된 리뷰' 순서대로 조회합니다.
 __ __ __ __ __ __ __
 
@@ -94,25 +92,19 @@ __ __ __ __ __ __ __
 - `docker-compose.yml`에 민감한 DB 정보가 포함되어 Git에 업로드될 위험하다고 생각했습니다.
 
 ### 해결
-- 팀원들의 도움으로 `docker-compose.yml` 파일을 수정하여 민감 정보는 `.gitignore` 파일로 분리.
+- `docker-compose.yml` 파일을 수정하여 민감 정보는 `.gitignore` 파일로 분리.
 - `docker-compose.yml` 설정을 통해 MySQL과 Spring Application 컨테이너를 독립적으로 구동하도록 구성.
 - 네트워크 연결 문제는 `networks` 설정으로 해결.
 
-### 정닛시 님의 피드백
-
-- 도커 명령어
+### 도커 명령어
 
 ```
-7:58 PM
 docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=1234 --name mysql mysql
 
-8:01 PM
 docker images
 
-8:02 PM
 docker exec -it mysql bash
 
-8:07 PM
 docker rm -f $(docker ps -aq)
 ```
 
@@ -171,9 +163,8 @@ networks:
 
 ```
 
-### 양한서 님의 피드백
-
-- 참고 ref : https://jandari91.tistory.com/104
+### 참고 ref
+- https://jandari91.tistory.com/104
 
 ---
 
